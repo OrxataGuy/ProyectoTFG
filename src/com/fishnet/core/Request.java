@@ -3,7 +3,6 @@ package com.fishnet.core;
 import java.io.*;
 import java.net.Socket;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +21,7 @@ public class Request {
 	public String url;
 	public static final int GET=0, POST=1, PUT=2, PATCH=3, DELETE=4, HEAD=5, OPTIONS=6;
 	private boolean ssl, base, verbose;
-	private String host, ip, path;
+	private String host, ip;
 	private int type;
 	private PrintWriter out;
 	private BufferedReader in;
@@ -37,7 +36,6 @@ public class Request {
 		this.host = new URL(this.url).getHost();
 		this.base = this.url==this.host;
 		this.ip = ip;
-		this.path = path;
 		this.out = new PrintWriter(socket.getOutputStream(), true);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		this.verbose = false;
@@ -53,7 +51,6 @@ public class Request {
 		this.host = new URL(this.url).getHost();
 		this.base = this.url==this.host;
 		this.ip = ip;
-		this.path = path;
 		this.out = new PrintWriter(socket.getOutputStream(), true);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		this.verbose = false;
@@ -68,7 +65,6 @@ public class Request {
 		this.host = new URL(this.url).getHost();
 		this.base = this.url==this.host;
 		this.ip = ip;
-		this.path = path;
 		this.out = new PrintWriter(socket.getOutputStream(), true);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		this.verbose = verbose;
@@ -84,7 +80,6 @@ public class Request {
 		this.host = new URL(this.url).getHost();
 		this.base = this.url==this.host;
 		this.ip = ip;
-		this.path = path;
 		this.out = new PrintWriter(socket.getOutputStream(), true);
 		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		this.verbose = verbose;
@@ -195,15 +190,5 @@ public class Request {
 		if(req.length==1) this.headers.put("Request", str);
 		else this.headers.put(req[0], req[1]);
 		if(this.verbose) System.out.println(str);
-	}
-	
-	private void log(ArrayList<String> array) {
-		if(this.verbose) 
-			for(String s : array)
-				System.out.println(s);
-	}
-	
-	private void log(Object obj) {
-		if(this.verbose) System.out.println(obj.toString());
 	}
 }

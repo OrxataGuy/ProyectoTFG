@@ -5,7 +5,6 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 import javax.net.ssl.*;
 import javax.swing.JTable;
@@ -157,7 +156,6 @@ public class TCPClient {
 		Fishnet.print("Cargando objetos del sitio web:");
 		for(String u : objects) {
 			URL uu = new URL(u);
-			String h = uu.getHost();
 			InetAddress i = InetAddress.getByName(host);
 			String p = i.getHostAddress();			
 			String ph = uu.getPath();

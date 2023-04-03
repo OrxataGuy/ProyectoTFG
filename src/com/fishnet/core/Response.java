@@ -33,9 +33,7 @@ public class Response {
 	public Map<String, String> getHeaders() throws IOException {
 		String line = this.in.readLine();
 		boolean endHeaders=false;
-		Map<String, String> headers = new HashMap<String, String>();
-		String code = "";
-		
+		Map<String, String> headers = new HashMap<String, String>();	
 		 while (line != null) {
 			 if(!endHeaders) {
 				 if(!(endHeaders = (line.length() < 12 || !Character.isUpperCase(line.charAt(0))))) {
@@ -64,13 +62,10 @@ public class Response {
 	public String getContent() throws IOException {
 		String line = this.in.readLine();
 		boolean endHeaders=false;
-		String code = "";
-		
-		 while (line != null) {
+		while (line != null) {
 			 if(!endHeaders) {
 				 if(!(endHeaders = line.length() == 0)) {
 					 if(line.substring(0,4) == "HTTP") {
-						 code = line.split(" ")[1];
 					 }else {
 						 
 					 }
@@ -92,11 +87,9 @@ public class Response {
 	
 	public ArrayList<String> explore() throws IOException {
 		Fishnet.print("Procesado del objeto base para listar todos los objetos a cargar");
-
 		String line = this.in.readLine();
 		ArrayList<String> contents = new ArrayList<String>();
 		String[] aux;
-        String content = "";
         while (line != null) {
             if(stringContainsFile(line))
             	if((aux = line.split("src=\"")).length > 1)
@@ -149,8 +142,5 @@ public class Response {
 			for(String s : array)
 				System.out.println(s);
 	}
-	
-	private void log(Object obj) {
-		if(this.verbose) System.out.println(obj.toString());
-	}
+
 }

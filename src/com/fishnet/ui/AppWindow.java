@@ -1,28 +1,18 @@
 package com.fishnet.ui;
-
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.EventQueue;
 
 import javax.swing.JFrame;
-import java.awt.GridBagLayout;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JMenu;
 import java.awt.GridLayout;
 import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
-import java.awt.FlowLayout;
 import javax.swing.JScrollPane;
-import javax.swing.JToolBar;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JTable;
-import javax.swing.JTree;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
@@ -30,18 +20,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
-import com.fishnet.models.DummyOps;
 import com.fishnet.net.NetObject;
 import com.fishnet.Fishnet;
 import com.fishnet.core.*;
-import com.fishnet.Fishnet;
 
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import javax.swing.JTabbedPane;
 import javax.swing.JSplitPane;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -72,16 +55,8 @@ public class AppWindow {
 			METHOD_BOX_WIDTH = 100,
 			OPTIONS_PANEL_PREFERRED_HEIGHT = 100;
 	private JPanel visorPanel;
-	private JTabbedPane tabbedPane;
-	private JPanel headersTab;
-	private JPanel bodyTab;
-	private JButton btnNewButton;
 	private JComboBox<Object> urlBox;
-	private JMenuItem menuAdvancedMode;
-	private boolean advancedModeEnabled = false;
 	private JSplitPane splitPane;
-	private JPanel panel_2;
-	private JPanel panel_3;
 	
 	public boolean running;
 	public RegViewerWindow regViewer;
@@ -163,7 +138,7 @@ public class AppWindow {
 		reqPanel.setMaximumSize(new Dimension(9999, REQ_PANEL_HEIGHT));
 		reqPanel.setMinimumSize(new Dimension(1, REQ_PANEL_HEIGHT));
 		reqPanel.setLayout(new BoxLayout(reqPanel, BoxLayout.X_AXIS));
-		urlBox = new JComboBox();
+		urlBox = new JComboBox<Object>(Fishnet.usedHosts.toArray());
 		urlBox.setEditable(true);
 		reqPanel.add(urlBox);
 		
@@ -192,7 +167,7 @@ public class AppWindow {
 		
 		
 		String[] options = new String[] {"GET","POST","PUT","DELETE", "PATCH", "HEAD", "OPTIONS"};
-		JComboBox methodSelectorBox = new JComboBox(options);
+		JComboBox<String> methodSelectorBox = new JComboBox<String>(options);
 		methodSelectorBox.setPreferredSize(new Dimension(METHOD_BOX_WIDTH, REQ_PANEL_HEIGHT));
 		methodSelectorBox.setMaximumSize(new Dimension(METHOD_BOX_WIDTH, REQ_PANEL_HEIGHT));
 		reqPanel.add(methodSelectorBox);
