@@ -2,6 +2,8 @@ package com.netfish;
 
 import java.util.ArrayList;
 
+import javax.swing.text.BadLocationException;
+
 import com.netfish.ui.*;
 
 /**
@@ -14,7 +16,20 @@ public class Netfish {
 	public static ArrayList<String> usedHosts;
 
 	public static void print(String string) {
-		String text = RegViewerWindow.textPane.getText();
-		RegViewerWindow.textPane.setText(text+string+"\n");
+		try {
+			RegViewerWindow.printNormalMessage(string);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void printEx(String string) {
+		try {
+			RegViewerWindow.printBoldMessage(string);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

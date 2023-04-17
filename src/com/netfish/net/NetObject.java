@@ -11,6 +11,20 @@ public class NetObject {
 	public String url, host, method, file, type, status, ip, reference, body;
 	private Map<String, String> requestHeaders, responseHeaders;
 	
+	public NetObject() {
+		this.url = "";
+		this.host = "";
+		this.method = "";
+		this.status = "";
+		this.file = "";
+		this.type = "";
+		this.ip = "";
+		this.reference = "";
+		this.body = "";
+		this.responseHeaders = new HashMap<String, String>();
+		this.requestHeaders = new HashMap<String, String>();
+	}
+	
 	public NetObject(String url, String host, String file, String type, String method, String status, String ip, String reference) {
 		this.url = url;
 		this.host = host;
