@@ -1,194 +1,107 @@
 package com.netfish.core;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.netfish.Netfish;
-import com.netfish.net.*;
+import com.netfish.net.NetObject;
 
-import javax.net.ssl.SSLSocket;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
-/**
- * 
- * @author Manel Andreu Pérez
- *
- */
 public class Request {
-
+	
 	public String url;
+	private String ip, ep;
+	private boolean verbose;
 	public static final int GET=0, POST=1, PUT=2, PATCH=3, DELETE=4, HEAD=5, OPTIONS=6;
-	private boolean ssl, base, verbose;
-	private String host, ip;
 	private int type;
-	private PrintWriter out;
-	private BufferedReader in;
-	private Socket socket;
-	private SSLSocket sslsocket;
-	private Map<String, String> headers;
+	private Map<String, String> headers, body;
 	
-	public Request(String url, Socket socket, String ip, String path, int type) throws IOException {
-		this.ssl=false;
+	public URL host;
+	
+	public Request(String url, String ip, String path, int type, Map<String, String> headers) throws IOException {
 		this.type = type;
 		this.url = url;
-		this.host = new URL(this.url).getHost();
-		this.base = this.url==this.host;
+		this.host = new URL(this.url);
 		this.ip = ip;
-		this.out = new PrintWriter(socket.getOutputStream(), true);
-		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		this.ep = this.host.getHost();
 		this.verbose = false;
-		this.socket = socket;
-		this.headers = new HashMap<String, String>();
+		this.headers = headers;
 
 	}
 	
-	public Request(String url, SSLSocket socket, String ip, String path, int type) throws IOException {
-		this.ssl=true;
+	public Request(String url, String ip, String path, int type) throws IOException {
 		this.type = type;
 		this.url = url;
-		this.host = new URL(this.url).getHost();
-		this.base = this.url==this.host;
+		this.host = new URL(this.url);
 		this.ip = ip;
-		this.out = new PrintWriter(socket.getOutputStream(), true);
-		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		this.ep = this.host.getHost();		
 		this.verbose = false;
-		this.sslsocket = socket;
 		this.headers = new HashMap<String, String>();
 	}
 	
-	public Request(String url, Socket socket, String ip, String path, int type, boolean verbose) throws IOException {
-		this.ssl=false;
-		this.type = type;
-		this.url = url;
-		this.host = new URL(this.url).getHost();
-		this.base = this.url==this.host;
-		this.ip = ip;
-		this.out = new PrintWriter(socket.getOutputStream(), true);
-		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		this.verbose = verbose;
-		this.socket = socket;
-		this.headers = new HashMap<String, String>();
-
-	}
-	
-	public Request(String url, SSLSocket socket, String ip, String path, int type, boolean verbose) throws IOException {
-		this.ssl=true;
-		this.type = type;
-		this.url = url;
-		this.host = new URL(this.url).getHost();
-		this.base = this.url==this.host;
-		this.ip = ip;
-		this.out = new PrintWriter(socket.getOutputStream(), true);
-		this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		this.verbose = verbose;
-		this.sslsocket = socket;
-		this.headers = new HashMap<String, String>();
-
-	}
-	
-	public Response send() {
-		return send(false);
-	}
-	
-	public Response send(boolean closeAtFinish) {
-		String target = this.base ? "/" : this.url;
-		switch(this.type)
-		{
-			case Request.GET:
-				this.out.println("GET "+target+" HTTP/1.0");
-				logReq("GET "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: GET "+target+" HTTP/1.0");
-
+	public Response call() throws IOException {
+		HttpURLConnection con = (HttpURLConnection) this.host.openConnection();
+		String method;
+		switch(this.type) {
+			case GET:
+			default:
+				method = "GET";
 				break;
-			case Request.POST:
-				this.out.println("POST "+target+" HTTP/1.0");
-				logReq("POST "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: POST "+target+" HTTP/1.0");
+			case POST:
+				method = "POST";
 				break;
-			case Request.PUT:
-				this.out.println("PUT "+target+" HTTP/1.0");
-				logReq("PUT "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: PUT "+target+" HTTP/1.0");
+			case PUT:
+				method = "PUT";
 				break;
-			case Request.PATCH:
-				this.out.println("PATCH "+target+" HTTP/1.0");
-				logReq("PATCH "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: PATCH "+target+" HTTP/1.0");
+			case DELETE:
+				method = "DELETE";
 				break;
-			case Request.DELETE:
-				this.out.println("DELETE "+target+" HTTP/1.0");
-				logReq("DELETE "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: DELETE "+target+" HTTP/1.0");
+			case PATCH:
+				method = "PATCH";
 				break;
-			case Request.HEAD:
-				this.out.println("HEAD "+target+" HTTP/1.0");
-				logReq("HEAD "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: HEAD "+target+" HTTP/1.0");
+			case HEAD:
+				method = "HEAD";
 				break;
-			case Request.OPTIONS:
-				this.out.println("OPTIONS "+target+" HTTP/1.0");
-				logReq("OPTIONS "+target+" HTTP/1.0");
-				Netfish.print("[REQUEST]: OPTIONS "+target+" HTTP/1.0");
+			case OPTIONS:
+				method = "OPTIONS";
 				break;
 		}
 		
-		this.out.println("Host: " + this.host);
-		logReq("Host: " + this.host);
-        // Cabeceras
-		this.out.println("User-Agent: Java/13.0.2");
-		logReq("User-Agent: Java/13.0.2");
-		this.out.println("Accept-Language: en,es-ES;q=0.8,es;q=0.5,en-US;q=0.3");
-		logReq("Accept-Language: en,es-ES;q=0.8,es;q=0.5,en-US;q=0.3");
-		this.out.println("Accept: */*");
-		logReq("Accept: */*");
-		this.out.println("Connection: keep-alive");
-		logReq("Connection: keep-alive");
-		this.out.println("Accept-Encoding: gzip, deflate, br");
-		logReq("Accept-Encoding: gzip, deflate, br");
-		log("");
-        // Blanco
-		this.out.println();
-
-				
-		return new Response(this.host, this.in, this.out, this.ssl, closeAtFinish, this.verbose);
-	}
-	
-	public NetObject toNetObject() throws IOException {
-		Response res = send();
-		String file, type;
-		String[] urlList = this.url.split(this.host);
-
-		if(urlList.length==1) {
-			file = "/";
-			type = "document";
-		}else {
-			file = urlList[1];
-			type = file.substring(file.lastIndexOf('.')+1, file.length());
-		}
+		con.setRequestMethod(method);
 		
-		NetObject result = new NetObject(this.url, this.host, file, type, "GET", "200", this.ip, "");
-		result.setRequestHeaders(this.headers);
-		result.setResponseHeaders(res.getHeaders());
-		return result;
-	}
+	
+		con.addRequestProperty("User-Agent", "Java/13.0.2");
+		con.addRequestProperty("Accept-Language", "en,es-ES;q=0.8,es;q=0.5,en-US;q=0.3");
+		con.addRequestProperty("Accept", "*/*");
+		con.addRequestProperty("Connection", "keep-alive");
+		con.addRequestProperty("Accept-Encoding", "gzip, deflate, br");
 		
-	public void close() throws IOException {
-		this.in.close();
-		this.out.close();
-		if(this.ssl) this.sslsocket.close();
-		else this.socket.close();
+		if(this.headers.size() > 1) 
+			for(@SuppressWarnings("rawtypes") Map.Entry entry : this.headers.entrySet())
+				con.addRequestProperty((String) entry.getKey(), (String) entry.getValue());
+		con.setDoOutput(true);
+		
+	    return new Response(method, this.url, this.host, this.ip, System.currentTimeMillis(), con);
 	}
 	
-	private void log(String str) {
-		if(this.verbose) System.out.println(str);
+	
+	public ArrayList<String> explore() throws IOException {
+		ArrayList<String> endpoints = new ArrayList<String>();
+		Document doc = Jsoup.connect(this.url).get();
+
+	    for (Element link : doc.select("link[href],script[src],img[src]")) 
+	        endpoints.add(link.attr("href") != "" ? link.attr("href") : link.attr("src"));
+	    
+	    return endpoints;
 	}
 	
-	private void logReq(String str) {
-		String[] req = str.split(":");
-		if(req.length==1) this.headers.put("Request", str);
-		else this.headers.put(req[0], req[1]);
-		if(this.verbose) System.out.println(str);
-	}
+	
 }

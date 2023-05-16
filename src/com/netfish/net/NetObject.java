@@ -10,33 +10,22 @@ import java.util.*;
 public class NetObject {
 	public String url, host, method, file, type, status, ip, reference, body;
 	private Map<String, String> requestHeaders, responseHeaders;
+	private long timeout;
 	
-	public NetObject() {
-		this.url = "";
-		this.host = "";
-		this.method = "";
-		this.status = "";
-		this.file = "";
-		this.type = "";
-		this.ip = "";
-		this.reference = "";
-		this.body = "";
-		this.responseHeaders = new HashMap<String, String>();
-		this.requestHeaders = new HashMap<String, String>();
-	}
-	
-	public NetObject(String url, String host, String file, String type, String method, String status, String ip, String reference) {
+	public NetObject(String url, String host, String file, String type, String method, int status, String ip, String reference, long timeout, Map<String, String> reqHeaders, Map<String, String> resHeaders) {
+		System.out.println("File: "+file+", Type: "+type);
 		this.url = url;
 		this.host = host;
 		this.method = method;
-		this.status = status;
+		this.status = String.valueOf(status);
 		this.file = file;
 		this.type = type;
 		this.ip = ip;
 		this.reference = reference;
 		this.body = "";
-		this.responseHeaders = new HashMap<String, String>();
-		this.requestHeaders = new HashMap<String, String>();
+		this.timeout = timeout;
+		this.responseHeaders = resHeaders;
+		this.requestHeaders = reqHeaders;
 	}
 	
 	/**
@@ -120,6 +109,8 @@ public class NetObject {
 		result.add(this.ip);
 		result.add(this.file);
 		result.add(this.type);
+		result.add(String.valueOf(this.timeout));
+
 		return result.toArray();
 	}
 	
@@ -133,6 +124,7 @@ public class NetObject {
 		result.add(this.ip);
 		result.add(this.file);
 		result.add(this.type);
+		result.add(String.valueOf(this.timeout));
 		return result.toArray();
 	}
 }

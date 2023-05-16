@@ -1,10 +1,7 @@
 package com.netfish.ui;
 
-import java.awt.EventQueue;
-
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -14,28 +11,31 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.table.*;
 import javax.swing.JTextPane;
+import javax.swing.RowFilter;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import java.util.regex.*;
 
 import com.netfish.Netfish;
 import com.netfish.core.TCPClient;
 import com.netfish.net.NetObject;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -43,8 +43,6 @@ import javax.swing.JTextField;
 
 public class LauncherWindow {
 
-	private JPanel controlPane;
-	
 	private JFrame frmFishnet;
 	private JTable table;
 	private JPanel reqPanel, netPanel;
@@ -79,15 +77,15 @@ public class LauncherWindow {
 	/**
 	 * Create the application.
 	 */
-	public LauncherWindow(String url, int id) {
+	public LauncherWindow(String url, int id, Map<String,String> requestHeaders, Map<String,String> requestBody) {
 		this.url = url;
 		this.id = id;
 		nets = new ArrayList<NetObject>(); //DummyOps.getNetObjects();
 		initialize();
-		this.tcpManager = new TCPClient(this, this.table);
 		try {
-			tcpManager.getNetObjects(url, id);
-		} catch (IOException e1) {
+			this.tcpManager = new TCPClient(this, id, url, this.table, requestHeaders, requestBody);
+			tcpManager.getNetObjects();
+		} catch (IOException | InterruptedException e1) {
 			Netfish.print(e1.getMessage());
 			e1.printStackTrace();
 		}
@@ -137,6 +135,13 @@ public class LauncherWindow {
 		filterBox = new JTextField();
 		reqPanel.add(filterBox);
 		filterBox.setColumns(10);
+		filterBox.addKeyListener((KeyListener) new KeyAdapter() {
+		      public void keyPressed(KeyEvent e) {
+		          if (e.getKeyCode()==KeyEvent.VK_ENTER) {
+		        	  filterTable();
+		          }
+		        }
+		      });
 		
 		stopButton = new JButton("■"); // ▶ ■ 
 		stopButton.addActionListener(new ActionListener() {
@@ -218,12 +223,43 @@ public class LauncherWindow {
 		loadingPanel.add(progressBar);
 		
 	}
+	
+	public void filterTable() {
+		String completeFilter = filterBox.getText();
+		String[] filters = completeFilter.split(";");
+		TableModel model = table.getModel();
+		
+		if(completeFilter.length() > 0 && completeFilter.indexOf(":") > -1) 
+		{
+			ArrayList<RowFilter<TableModel, Object>> fs = new ArrayList<RowFilter<TableModel, Object>>();
+			for(String s : filters) {
+				String[] f = s.split(":");
+				for(int i=0; i<model.getColumnCount(); i++) {
+					if(model.getColumnName(i).equalsIgnoreCase(f[0].trim())) {
+						try {
+							fs.add(RowFilter.regexFilter(f[1].trim(), i));
+						    } catch (PatternSyntaxException e) {
+						    	e.printStackTrace();
+						      return;
+						    }
+						break;
+					}
+				}
+			}
+			
+			((TableRowSorter<TableModel>)table.getRowSorter()).setRowFilter(RowFilter.andFilter(fs));
+		} else ((TableRowSorter<TableModel>)table.getRowSorter()).setRowFilter(null);		
+	}
+	
 	public JProgressBar getProgressBar() {
 		return this.progressBar;
 	}
 	public void setNets(ArrayList<NetObject> nets) {
 		this.nets = nets;
-		
+	}
+	
+	public void addNet(NetObject net) {
+		this.nets.add(net);
 	}
 
 }

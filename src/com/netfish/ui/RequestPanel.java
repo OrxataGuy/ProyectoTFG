@@ -104,7 +104,7 @@ public class RequestPanel extends JPanel {
 		goButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String url = urlBox.getSelectedItem().toString();
-				LauncherWindow launcher = new LauncherWindow(url, id);
+				LauncherWindow launcher = new LauncherWindow(url, id, requestHeaders, requestBody);
 				launcher.getFrame().setVisible(true);
 				
 			}

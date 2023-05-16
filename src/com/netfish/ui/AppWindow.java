@@ -40,9 +40,6 @@ public class AppWindow {
 			METHOD_BOX_WIDTH = 100,
 			OPTIONS_PANEL_PREFERRED_HEIGHT = 100;
 	private JTabbedPane requestsPanel;
-	private JPanel panel;
-
-	
 	/**
 	 * Create the application.
 	 */
