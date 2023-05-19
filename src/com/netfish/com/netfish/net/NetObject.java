@@ -8,12 +8,11 @@ import java.util.*;
  *
  */
 public class NetObject {
-	public String url, host, method, file, type, status, ip, reference, body;
+	public String url, host, method, file, type, status, ip, reference, body, content;
 	private Map<String, String> requestHeaders, responseHeaders;
 	private long timeout;
 	
-	public NetObject(String url, String host, String file, String type, String method, int status, String ip, String reference, long timeout, Map<String, String> reqHeaders, Map<String, String> resHeaders) {
-		System.out.println("File: "+file+", Type: "+type);
+	public NetObject(String url, String host, String file, String type, String method, int status, String ip, String reference, long timeout, String content, Map<String, String> reqHeaders, Map<String, String> resHeaders) {
 		this.url = url;
 		this.host = host;
 		this.method = method;
@@ -26,6 +25,7 @@ public class NetObject {
 		this.timeout = timeout;
 		this.responseHeaders = resHeaders;
 		this.requestHeaders = reqHeaders;
+		this.content = content;
 	}
 	
 	/**
@@ -126,5 +126,14 @@ public class NetObject {
 		result.add(this.type);
 		result.add(String.valueOf(this.timeout));
 		return result.toArray();
+	}
+	
+	public String getContent() {
+		if(this.content.length() > 500) return this.content.substring(0, 500)+"...";
+		return this.content;
+	}
+	
+	public long getTimeout() {
+		return this.timeout;
 	}
 }

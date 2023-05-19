@@ -14,6 +14,7 @@ import javax.swing.JTable;
 import javax.swing.table.*;
 import javax.swing.JTextPane;
 import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -77,14 +78,14 @@ public class LauncherWindow {
 	/**
 	 * Create the application.
 	 */
-	public LauncherWindow(String url, int id, Map<String,String> requestHeaders, Map<String,String> requestBody) {
+	public LauncherWindow(String url, int id, int method, Map<String,String> requestHeaders, Map<String,String> requestBody) {
 		this.url = url;
 		this.id = id;
 		nets = new ArrayList<NetObject>(); //DummyOps.getNetObjects();
 		initialize();
 		try {
-			this.tcpManager = new TCPClient(this, id, url, this.table, requestHeaders, requestBody);
-			tcpManager.getNetObjects();
+			this.tcpManager = new TCPClient(this, id, url, this.table, requestHeaders, requestBody, true);
+			tcpManager.getNetObjects(method);
 		} catch (IOException | InterruptedException e1) {
 			Netfish.print(e1.getMessage());
 			e1.printStackTrace();
@@ -164,34 +165,40 @@ public class LauncherWindow {
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
-				headersText.setText("");
-				int index = table.getSelectedRow();
-				NetObject net = nets.get(index);
-				StyledDocument doc = (StyledDocument) headersText.getDocument();
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						headersText.setText("");
+						int index = table.getSelectedRow();
+						NetObject net = nets.get(index);
+						StyledDocument doc = (StyledDocument) headersText.getDocument();
 
-		        SimpleAttributeSet normal = new SimpleAttributeSet();
-		        StyleConstants.setFontFamily(normal, "SansSerif");
-		        StyleConstants.setFontSize(normal, 16);
+				        SimpleAttributeSet normal = new SimpleAttributeSet();
+				        StyleConstants.setFontFamily(normal, "SansSerif");
+				        StyleConstants.setFontSize(normal, 16);
 
-		        SimpleAttributeSet bold = new SimpleAttributeSet(normal);
-		        StyleConstants.setBold(bold, true);
+				        SimpleAttributeSet bold = new SimpleAttributeSet(normal);
+				        StyleConstants.setBold(bold, true);
 
-		        try {
-		        	doc.insertString(doc.getLength(), "Cabeceras de la petición:" + "\n", bold);
-					for(Map.Entry <String,String> entry : net.getRequestHeaders().entrySet()) 
-						doc.insertString(doc.getLength(), entry.getKey()+": "+entry.getValue() + "\n", normal);
-					doc.insertString(doc.getLength(), "\n", normal);
-					doc.insertString(doc.getLength(), "Cabeceras de la respuesta:" + "\n", bold);
-					for(Map.Entry <String,String> entry : net.getResponseHeaders().entrySet()) 
-						doc.insertString(doc.getLength(), entry.getKey()+": "+entry.getValue() + "\n", normal);
-					
-					
-				} catch (BadLocationException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-		       
-				
+				        try {
+				        	doc.insertString(doc.getLength(), "Cabeceras de la petición:" + "\n", bold);
+							for(Map.Entry <String,String> entry : net.getRequestHeaders().entrySet()) 
+								doc.insertString(doc.getLength(), entry.getKey()+": "+entry.getValue() + "\n", normal);
+							doc.insertString(doc.getLength(), "\n", normal);
+							doc.insertString(doc.getLength(), "Cabeceras de la respuesta:" + "\n", bold);
+							for(Map.Entry <String,String> entry : net.getResponseHeaders().entrySet()) 
+								doc.insertString(doc.getLength(), entry.getKey()+": "+entry.getValue() + "\n", normal);
+							if (net.getContent() != "") {
+								doc.insertString(doc.getLength(), "\n", normal);
+								doc.insertString(doc.getLength(), "Respuesta:" + "\n", bold);
+								doc.insertString(doc.getLength(), net.getContent() + "\n", normal);
+							}
+							
+						} catch (BadLocationException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+				});
 			}
 		});
 

@@ -6,11 +6,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+
+// import org.littleshoot.proxy.HttpProxyServer;
+// import org.littleshoot.proxy.impl.DefaultHttpProxyServer;
+
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
@@ -21,7 +26,7 @@ import com.netfish.ui.LauncherWindow;
 
 public class TCPClient {
 
-	private boolean stop=false;
+	private boolean stop=false, useProxy, hasBody;
 	public int loadedObjects, objectCount;
 	public int[] attempts;
 	public final int MAX_ATTEMPTS =2;
@@ -51,11 +56,35 @@ public class TCPClient {
 		this.primaryURL = url;
 		this.url = new URL(this.primaryURL);
 		this.currentNum = 1;
+		this.useProxy = false;
+		this.hasBody = false;
+		for(Entry<String, String> entry : requestBody.entrySet())
+			if(entry.getKey() != "") this.hasBody = true;
+	}
+	
+	public TCPClient(LauncherWindow context, int id, String url, JTable table, Map<String, String> requestHeaders, Map<String, String> requestBody, boolean useProxy) throws MalformedURLException {
+		this.id = id;
+		this.context = context;
+		this.table = table;
+		this.requestHeaders = requestHeaders;
+		this.requestBody = requestBody;
+		this.stop = false;
+		this.primaryURL = url;
+		this.url = new URL(this.primaryURL);
+		this.currentNum = 1;
+		this.useProxy = useProxy;
+		this.hasBody = false;
+		for(Entry<String, String> entry : requestBody.entrySet())
+			if(entry.getKey() != "") this.hasBody = true;
 	}
     
 	
-	public void getNetObjects() throws IOException, InterruptedException {
+	public void getNetObjects(int type) throws IOException, InterruptedException {
 		initializeTable();
+		/*HttpProxyServer server;
+		if(this.useProxy)
+			server = DefaultHttpProxyServer.bootstrap().withPort(8080).start();*/
+		
 		ArrayList<NetObject> result = new ArrayList<NetObject>();
 		String host = url.getHost();
 	    loadedObjects = 0;
@@ -77,48 +106,19 @@ public class TCPClient {
 
 		Netfish.print("[PETICIÓN "+id+" ("+primaryURL+")] Creando socket de conexión por el puerto 443");
 		
-		Request req = new Request(this.primaryURL, ip, path, Request.GET, this.requestHeaders);
+		Request req = new Request(this.primaryURL, ip, path, Request.GET, this.requestHeaders, this.useProxy);
 		ArrayList<String> endpoints = req.explore();
-		addNet(req.call().toNetObject());
-
+		
+		if(this.hasBody)
+			addNet(req.call(type, requestBody).toNetObject());
+		else
+			addNet(req.call(type).toNetObject());
+		
 		this.context.getProgressBar().setMaximum(endpoints.size()+1);
 		this.context.getProgressBar().setValue(++loadedObjects);
 		
 		Netfish.print("[PETICIÓN "+id+" ("+primaryURL+")] Objeto base cargado.");
 		Netfish.print("[PETICIÓN "+id+" ("+primaryURL+")] Cargando objetos del sitio web.");
-		/*for(String endpoint : endpoints)
-		{
-			
-			String ep = endpoint.lastIndexOf("http") == -1 && endpoint.lastIndexOf("www.") == -1 ? primaryURL+endpoint : endpoint;
-			if(ep.lastIndexOf("//")>10)
-				ep = primaryURL+endpoint.replaceFirst("/", "");
-			
-			if(ep.indexOf("ytimg") != -1) 
-				ep = "https:"+endpoint;
-
-			try {
-				System.out.println(ep);
-				URL url = new URL(ep);
-				host = url.getHost();
-				ia = InetAddress.getByName(host);
-				ip = ia.getHostAddress();	
-				path = url.getPath();
-				
-				Netfish.print("[PETICIÓN "+id+" ("+ep+")] Direción: "+url.getHost());
-				Netfish.print("[PETICIÓN "+id+" ("+ep+")] Direción canónica: "+ia.getCanonicalHostName());
-				Netfish.print("[PETICIÓN "+id+" ("+ep+")] IP: "+ia.getHostAddress());
-				Netfish.print("[PETICIÓN "+id+" ("+ep+")] Puerto: "+ (url.getPort() == -1 ? String.valueOf(443) : String.valueOf(url.getPort())));
-				Netfish.print("[PETICIÓN "+id+" ("+ep+")] Directorio: "+ url.getPath());
-				Netfish.print("");
-				req = new Request(ep, ip, path, Request.GET);
-				result.add(req.call().toNetObject());
-				context.getProgressBar().setValue(++loadedObjects);
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}						
-		}*/
 		
 		ExecutorService threadPool = Executors.newFixedThreadPool(1);
 		for(String endpoint : endpoints)
@@ -134,7 +134,7 @@ public class TCPClient {
 							ep = "https:"+endpoint;
 
 						try {
-							System.out.println(ep);
+						//	System.out.println(ep);
 							URL url = new URL(ep);
 							String host = url.getHost();
 							InetAddress ia = InetAddress.getByName(host);
@@ -147,8 +147,8 @@ public class TCPClient {
 							Netfish.print("[PETICIÓN "+id+" ("+ep+")] Puerto: "+ (url.getPort() == -1 ? String.valueOf(443) : String.valueOf(url.getPort())));
 							Netfish.print("[PETICIÓN "+id+" ("+ep+")] Directorio: "+ url.getPath());
 							Netfish.print("");
-							Request req = new Request(ep, ip, path, Request.GET);
-							addNet(req.call().toNetObject());
+							Request req = new Request(ep, ip, path, Request.GET, useProxy);
+							addNet(req.call(Request.GET).toNetObject());
 							context.getProgressBar().setValue(++loadedObjects);
 						} catch (MalformedURLException e) {
 							e.printStackTrace();
@@ -158,10 +158,7 @@ public class TCPClient {
 					}
 				});
 			}
-			else Netfish.print("Carga interrumpida por el usuario");
-	//	populateTable(result);
-		//Netfish.print("[PETICIÓN "+id+" ("+primaryURL+")] Carga finalizada");
-		
+			else Netfish.print("Carga interrumpida por el usuario");		
 	}
 	
 	public void initializeTable() {

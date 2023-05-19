@@ -22,6 +22,11 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
 import com.netfish.Netfish;
+import javax.swing.JCheckBox;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import javax.swing.SwingConstants;
 
 public class RequestPanel extends JPanel {
 
@@ -32,7 +37,7 @@ public class RequestPanel extends JPanel {
 	private JPanel reqPanel, headersPanel, bodyPanel, optionsPanel;
 	private JTabbedPane tabbedPane;
 	private JTable headersTable, bodyTable;
-	private JComboBox<Object> urlBox;
+	private JComboBox<Object> urlBox, methodSelectorBox;
 	private JButton goButton;
 	private String[] methods;
 	private Map<String,String> requestBody, requestHeaders;
@@ -40,9 +45,21 @@ public class RequestPanel extends JPanel {
 			REQ_PANEL_PREFERRED_WIDTH = 800, 
 			METHOD_BOX_WIDTH = 100;
 	private int id;
+	private JCheckBox keepHeadersOption;
+	private JCheckBox showAllContentOption;
 	
 	public RequestPanel(int id) {
 		this.id = id;
+		requestBody = new HashMap<String, String>();
+		requestHeaders = new HashMap<String, String>();	
+		initialize();
+		populateURLBox();
+		populateBodyTable();
+		populateHeadersTable();
+	}
+	
+	public RequestPanel() {
+		this.id = (int) (Math.random()*100);
 		requestBody = new HashMap<String, String>();
 		requestHeaders = new HashMap<String, String>();	
 		initialize();
@@ -64,15 +81,11 @@ public class RequestPanel extends JPanel {
 		this.add(reqPanel);
 
 		
-		JSplitPane splitPane = new JSplitPane();
-		
-		this.add(splitPane);
 		
 		
 
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-		splitPane.setLeftComponent(tabbedPane);				
 				
 		headersPanel = new JPanel();
 		tabbedPane.addTab("Cabeceras de la petición", null, headersPanel, null);
@@ -91,8 +104,35 @@ public class RequestPanel extends JPanel {
 		bodyTable = new JTable();
 		bodyPanel.add(new JScrollPane(bodyTable));
 		
-		optionsPanel = new JPanel();
-		splitPane.setRightComponent(optionsPanel);
+		optionsPanel = new JPanel();	
+		GridBagLayout gbl_optionsPanel = new GridBagLayout();
+		gbl_optionsPanel.columnWidths = new int[]{0, 0, 0};
+		gbl_optionsPanel.rowHeights = new int[]{0, 0, 0};
+		gbl_optionsPanel.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_optionsPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+
+		optionsPanel.setLayout(gbl_optionsPanel);
+		
+		
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, optionsPanel, tabbedPane);
+		this.add(splitPane);
+		
+		keepHeadersOption = new JCheckBox("Mantener las cabeceras en todas las subconsultas");
+		GridBagConstraints gbc_keepHeadersOption = new GridBagConstraints();
+		gbc_keepHeadersOption.anchor = GridBagConstraints.WEST;
+		gbc_keepHeadersOption.insets = new Insets(0, 0, 5, 5);
+		gbc_keepHeadersOption.gridx = 0;
+		gbc_keepHeadersOption.gridy = 0;
+		optionsPanel.add(keepHeadersOption, gbc_keepHeadersOption);
+		
+		showAllContentOption = new JCheckBox("Mostrar contenido entero de las respuestas");
+		showAllContentOption.setHorizontalAlignment(SwingConstants.LEFT);
+		GridBagConstraints gbc_showAllContentOption = new GridBagConstraints();
+		gbc_showAllContentOption.anchor = GridBagConstraints.WEST;
+		gbc_showAllContentOption.insets = new Insets(0, 0, 0, 5);
+		gbc_showAllContentOption.gridx = 0;
+		gbc_showAllContentOption.gridy = 1;
+		optionsPanel.add(showAllContentOption, gbc_showAllContentOption);
 		
 		reqPanel.setLayout(new BoxLayout(reqPanel, BoxLayout.X_AXIS));
 		urlBox = new JComboBox<Object>(Netfish.usedHosts.toArray());
@@ -104,7 +144,9 @@ public class RequestPanel extends JPanel {
 		goButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String url = urlBox.getSelectedItem().toString();
-				LauncherWindow launcher = new LauncherWindow(url, id, requestHeaders, requestBody);
+				LauncherWindow launcher = new LauncherWindow(url, id, methodSelectorBox.getSelectedIndex(), requestHeaders, requestBody);
+				for(Entry<String, String> entry : requestHeaders.entrySet())
+					System.out.println(entry.getKey()+": "+entry.getValue());
 				launcher.getFrame().setVisible(true);
 				
 			}
@@ -112,7 +154,7 @@ public class RequestPanel extends JPanel {
 		reqPanel.add(goButton);
 		
 		methods = new String[] {"GET","POST","PUT","DELETE", "PATCH", "HEAD", "OPTIONS"};
-		JComboBox<Object> methodSelectorBox = new JComboBox<Object>(methods);
+		methodSelectorBox = new JComboBox<Object>(methods);
 		
 		methodSelectorBox.setPreferredSize(new Dimension(METHOD_BOX_WIDTH, REQ_PANEL_HEIGHT));
 		methodSelectorBox.setMaximumSize(new Dimension(METHOD_BOX_WIDTH, REQ_PANEL_HEIGHT));

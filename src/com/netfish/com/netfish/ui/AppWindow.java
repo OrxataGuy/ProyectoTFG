@@ -53,10 +53,10 @@ public class AppWindow {
 	public JFrame getFrame() {
 		return this.frmFishnet;
 	}
-		
+			
 	private void addRequest() {
 		String title = "Petición "+this.requestCount;
-		RequestPanel body = new RequestPanel(this.requestCount++);
+		RequestPanel body =  new RequestPanel(this.requestCount++);
 		requestsPanel.addTab(title, null, body, null);
 		frmFishnet.revalidate();
 
